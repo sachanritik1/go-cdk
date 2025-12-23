@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 
@@ -45,6 +46,31 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 	})
 	// grant the lambda function read and write permissions to the dynamodb table
 	table.GrantReadWriteData(myFunction)
+
+	// create an api gateway
+	api := awsapigateway.NewRestApi(stack, jsii.String("MyAPIGateway"), &awsapigateway.RestApiProps{
+		DefaultCorsPreflightOptions: &awsapigateway.CorsOptions{
+			AllowHeaders: jsii.Strings("Content-Type", "Authorization"),
+			AllowMethods: jsii.Strings("GET", "POST", "DELETE", "PUT", "OPTIONS"),
+			AllowOrigins: jsii.Strings("*"),
+		},
+		DeployOptions: &awsapigateway.StageOptions{
+			LoggingLevel: awsapigateway.MethodLoggingLevel_INFO,
+		},
+	})
+
+	// integrate the lambda function with the api gateway
+	integration := awsapigateway.NewLambdaIntegration(myFunction, nil)
+
+	// create a resource and method for the api gateway (route: /register, method: POST)
+	registerResource := api.Root().AddResource(jsii.String("register"), nil)
+	registerResource.AddMethod(jsii.String("POST"), integration, nil)
+
+	loginResource := api.Root().AddResource(jsii.String("login"), nil)
+	loginResource.AddMethod(jsii.String("POST"), integration, nil)
+
+	healthResource := api.Root().AddResource(jsii.String("health"), nil)
+	healthResource.AddMethod(jsii.String("GET"), integration, nil)
 
 	return stack
 }
