@@ -72,6 +72,9 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 	healthResource := api.Root().AddResource(jsii.String("health"), nil)
 	healthResource.AddMethod(jsii.String("GET"), integration, nil)
 
+	protectedResource := api.Root().AddResource(jsii.String("protected"), nil)
+	protectedResource.AddMethod(jsii.String("GET"), integration, nil)
+
 	return stack
 }
 
